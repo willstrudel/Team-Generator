@@ -18,12 +18,12 @@ const promptUser = () =>
         {
             type: "input",
             name: "id",
-            message: "What is the employee's ID number?"
+            message: "What is the employee's ID number?",
         },
         {
             type: "input",
             name: "email",
-            message: "What is the employee's email address?"
+            message: "What is the employee's email address?",
         },
         {
             type: "input",
@@ -44,3 +44,60 @@ const promptUser = () =>
             when: (answers) => answers.role === "Intern", 
         },
     ]);
+
+    const addAnotherEmployee = () => 
+        inquirer.prompt([
+            {
+                type: "confirm",
+                name: "add",
+                message: "Would you like to add another employee?",
+            },
+        ]);
+
+    function init() {
+        promptUser().then((data) => {
+            switch (data.role) {
+                case "Manager":
+                    let newManager = new Manager(
+                        data.name,
+                        data.id,
+                        data.email,
+                        data.office,
+                    );
+                    employeeList.push(newManager);
+                    break;
+                case "Intern":
+                    let newIntern = new Intern(
+                        data.name,
+                        data.id,
+                        data.email,
+                        data.school,
+                    );
+                    employeeList.push(newIntern);
+                    break;
+                case "Engineer": 
+                    let newEngineer = new Engineer(
+                        data.name,
+                        data.id,
+                        data.email,
+                        data.github,
+                    ); 
+                    employeeList.push(newEngineer);
+                    break; 
+                }
+
+                console.log("Employee data has been successfully saved!");
+                addAnotherEmployee().then((data) => {
+                    if(data.add) {
+                        init();
+                    } else {
+                        fs.writeFileSync(outputPath, render(employeeList), "utf-8"),
+                        (err) =>
+                            err ? console.log(err) : console.log("Done!");
+                            console.log("The employee file has been created.")
+                    }
+             });
+        });
+     }
+
+     init();
