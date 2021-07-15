@@ -1,5 +1,8 @@
 # Team-Generator
 
+## Description
+Node.js implemented to generate employee cards based on users input inside the terminal.
+
 ## Video Presentation 
 
 
