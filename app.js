@@ -3,107 +3,129 @@ const Engineer = require("./js/Engineer");
 const Intern = require("./js/Intern");
 const inquirer = require('inquirer');
 const fs = require('fs');
-const path = require('path');
-const OUTPUT_DIR = path.resolve(__dirname, "output");
-const outputPath = path.join(OUTPUT_DIR, "team.html");
-const employeeList = [];
+const htmlTemplate = require('./src/template');
+const fillEngineer = [];
+const fillIntern = [];
+const fillManager = [];
 
-const promptUser = () => 
-    inquirer.prompt([
-        {
-            type: "input",
-            name: "name",
-            message: "What is the employee's name?" ,
-        },
-        {
-            type: "list",
-            name: "role",
-            message: "What is the employee's role at the company?",
-            choices: ["Manager", "Engineer", "Intern"],
-        },
-        {
-            type: "input",
-            name: "id",
-            message: "What is the employee's ID number?",
-        },
-        {
-            type: "input",
-            name: "email",
-            message: "What is the employee's email address?",
-        },
-        {
-            type: "input",
-            name: "office",
-            message: "What is the manager's office number?",
-            when: (answers) => answers.role === "Manager", 
-        },
-        {
-            type: "input",
-            name: "github",
-            message: "What is the engineer's GitHub username?",
-            when: (answers) => answers.role === "Engineer",
-        },
-        {
-            type: "input",
-            name: "school",
-            message: "What is the name of the inters school?",
-            when: (answers) => answers.role === "Intern", 
-        },
-    ]);
 
-    const addAnotherEmployee = () => 
-        inquirer.prompt([
-            {
-                type: "confirm",
-                name: "add",
-                message: "Would you like to add another employee?",
-            },
-        ]);
 
-    function init() {
-        promptUser().then((data) => {
-            switch (data.role) {
-                case "Manager":
-                    let newManager = new Manager(
-                        data.name,
-                        data.id,
-                        data.email,
-                        data.office,
-                    );
-                    employeeList.push(newManager);
-                    break;
-                case "Intern":
-                    let newIntern = new Intern(
-                        data.name,
-                        data.id,
-                        data.email,
-                        data.school,
-                    );
-                    employeeList.push(newIntern);
-                    break;
-                case "Engineer": 
-                    let newEngineer = new Engineer(
-                        data.name,
-                        data.id,
-                        data.email,
-                        data.github,
-                    ); 
-                    employeeList.push(newEngineer);
-                    break; 
-                }
+const managerQuestions = [{
+    type: 'input',
+    message: "What is the team manager's name?",
+    name: 'name',
+},
+{
+    type: 'input',
+    message: "What is the team manager's id?",
+    name: 'id',
+},
+{
+    type: 'input',
+    message: "What is the team manager's email?",
+    name: 'email',
+},
+{
+    type: 'input',
+    message: "What is the team manager's office number?",
+    name: 'office',
+}];
 
-                console.log("Employee data has been successfully saved!");
-                addAnotherEmployee().then((data) => {
-                    if(data.add) {
-                        init();
-                    } else {
-                        fs.writeFileSync(outputPath, render(employeeList), "utf-8"),
-                        (err) =>
-                            err ? console.log(err) : console.log("Done!");
-                            console.log("The employee file has been created.")
-                    }
-             });
+const engineerQuestions = [{
+    type: 'input',
+    message: "What is your engineer's name?",
+    name: 'name',
+},
+{
+    type: 'input',
+    message: "What is your engineer's id?",
+    name: 'id',
+},
+{
+    type: 'input',
+    message: "What is your engineer's email?",
+    name: 'email',
+},
+{
+    type: 'input',
+    message: "What is your engineer's GitHub username?",
+    name: 'github',
+}];
+
+const internQuestions = [{
+    type: 'input',
+    message: "What is your intern's name?",
+    name: 'name',
+},
+{
+    type: 'input',
+    message: "What is your intern's id?",
+    name: 'id',
+},
+{
+    type: 'input',
+    message: "What is your intern's email?",
+    name: 'email',
+},
+{
+    type: 'input',
+    message: "What is your intern's school?",
+    name: 'school',
+}];
+
+const teamQuestion = [{ 
+    type: 'list',
+    message: "Which type of team member would you like to add?",
+    choices: ['Engineer', 'Intern', "I don't want to add any more team members"],
+    name: 'team'
+}];
+
+
+function init() {
+    inquirer.prompt(managerQuestions)
+        .then((data) => { 
+            const manager = new Manager(data.name, data.id, data.email, data.office);
+            fillManager.push(manager);
+            teamPrompt();   
         });
-     }
+    
+};
+
+function engineerTeam() {
+    inquirer.prompt(engineerQuestions)
+        .then((data) => {
+            const engineer = new Engineer(data.name, data.id, data.email, data.github);
+            fillEngineer.push(engineer);
+            teamPrompt();
+        });
+};
+
+function internTeam() {
+    inquirer.prompt(internQuestions)
+        .then((data) => {
+            const intern = new Intern(data.name, data.id, data.email, data.school);
+            fillIntern.push(intern);
+            teamPrompt();
+        });
+};
+
+function teamPrompt() {
+    inquirer.prompt(teamQuestion)
+    .then((newTeam) => {
+        if(newTeam.team == "Engineer"){
+            engineerTeam();
+        } else if (newTeam.team == "Intern"){
+            internTeam();
+        } else {
+            generateTeamPage();
+        }
+    });
+};
+
+function generateTeamPage() {
+    const htmlContent = htmlTemplate.generateHTML(fillManager, fillEngineer, fillIntern);
+    fs.writeFile('./dist/team.html', htmlContent, (err) =>
+    err ? console.log(err) : console.log("Successfully created Team Profile!"));
+};
 
      init();
